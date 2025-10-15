@@ -1,0 +1,84 @@
+import tkinter as tk
+from tkinter import ttk, messagebox
+from dataclasses import dataclass
+@dataclass
+class Pregunta:
+    texto: str
+    opciones: list
+    respuesta_correcta_index: int
+class QuizApp:
+    def __init__(self, root):
+        self.root = root
+        root.title("Quiz - Gestión de eventos (Ej. 8.3)")
+        root.geometry("600x380")
+        root.resizable(False, False)  # evita que se deforme la ventana
+
+        self.preguntas = self._crear_preguntas()
+        self.actual = 0
+        self.respuestas_usuario = [None] * len(self.preguntas)
+        self.frame = ttk.Frame(root, padding=12)
+        self.frame.pack(fill=tk.BOTH, expand=True)
+        self.pregunta_lbl = ttk.Label(self.frame, text="", wraplength=560, font=("Helvetica", 12))
+        self.pregunta_lbl.grid(column=0, row=0, columnspan=2, pady=(0, 8))
+        self.var_op = tk.IntVar(value=-1)
+        self.radio_buttons = []
+        for i in range(4):
+            rb = ttk.Radiobutton(self.frame, text="", variable=self.var_op, value=i, command=self._on_option_selected)
+            rb.grid(column=0, row=1 + i, sticky=tk.W, pady=2)
+            self.radio_buttons.append(rb)
+
+        nav_frame = ttk.Frame(self.frame)
+        nav_frame.grid(column=0, row=6, pady=12)
+
+        ttk.Button(nav_frame, text="Anterior", command=self.ir_anterior).grid(column=0, row=0, padx=5)
+        ttk.Button(nav_frame, text="Siguiente", command=self.ir_siguiente).grid(column=1, row=0, padx=5)
+        ttk.Button(nav_frame, text="Terminar y Calificar", command=self.calificar).grid(column=2, row=0, padx=8)
+
+        self.puntaje_lbl = ttk.Label(self.frame, text="Puntaje: -", font=("Helvetica", 10))
+        self.puntaje_lbl.grid(column=0, row=7, sticky=tk.W)
+        self._mostrar_pregunta()
+
+    def _crear_preguntas(self):
+        return [
+            Pregunta("¿Cuál es la capital de Colombia?", ["Bogotá", "Medellín", "Cali", "Cartagena"], 0),
+            Pregunta("¿Cuánto es 2 + 2?", ["3", "4", "5", "6"], 1),
+            Pregunta("¿Python es un lenguaje...?", ["Compilado", "Interpretado", "Ensamblador", "Marca de ropa"], 1),
+            Pregunta("¿Qué color resulta de mezclar rojo y azul?", ["Verde", "Naranja", "Magenta", "Amarillo"], 2),
+            Pregunta("¿La Tierra es el tercer planeta desde...?", ["Venus", "Marte", "El Sol", "Mercurio"], 2),
+        ]
+
+    def _mostrar_pregunta(self):
+        q = self.preguntas[self.actual]
+        self.pregunta_lbl.config(text=f"Pregunta {self.actual + 1}/{len(self.preguntas)}: {q.texto}")
+        for i, opt in enumerate(q.opciones):
+            self.radio_buttons[i].config(text=opt)
+        sel = self.respuestas_usuario[self.actual]
+        self.var_op.set(-1 if sel is None else sel)
+
+    def _on_option_selected(self):
+        sel = self.var_op.get()
+        self.respuestas_usuario[self.actual] = sel
+        self.puntaje_lbl.config(text=f"Seleccionaste: {self.preguntas[self.actual].opciones[sel]}")
+
+    def ir_siguiente(self):
+        if self.actual < len(self.preguntas) - 1:
+            self.actual += 1
+            self._mostrar_pregunta()
+
+    def ir_anterior(self):
+        if self.actual > 0:
+            self.actual -= 1
+            self._mostrar_pregunta()
+
+    def calificar(self):
+        total = sum(
+            1 for i, q in enumerate(self.preguntas)
+            if self.respuestas_usuario[i] == q.respuesta_correcta_index
+        )
+        self.puntaje_lbl.config(text=f"Puntaje: {total}/{len(self.preguntas)}")
+        messagebox.showinfo("Resultado", f"Tu puntaje: {total}/{len(self.preguntas)}")
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = QuizApp(root)
+    root.mainloop()

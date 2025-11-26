@@ -1,0 +1,101 @@
+import tkinter as tk
+from tkinter import ttk, messagebox
+import os
+FILE = "estudiantes.txt"
+def read_file():
+    if not os.path.exists(FILE):
+        return []
+    with open(FILE, "r") as f:
+        lines = f.readlines()
+    data = []
+    for l in lines:
+        p = l.strip().split(",")
+        if len(p) == 3:
+            data.append(p)
+    return data
+
+def write_file(data):
+    with open(FILE, "w") as f:
+        for r in data:
+            f.write(",".join(r) + "\n")
+
+def refresh_table():
+    for row in table.get_children():
+        table.delete(row)
+    data = read_file()
+    for r in data:
+        table.insert("", "end", values=r)
+
+def create_student():
+    sid = entry_id.get()
+    name = entry_name.get()
+    age = entry_age.get()
+    if not sid or not name or not age:
+        messagebox.showwarning("Error", "Datos incompletos")
+        return
+    data = read_file()
+    for r in data:
+        if r[0] == sid:
+            messagebox.showwarning("Error", "ID existente")
+            return
+    data.append([sid, name, age])
+    write_file(data)
+    refresh_table()
+
+def read_student():
+    sid = entry_id.get()
+    data = read_file()
+    for r in data:
+        if r[0] == sid:
+            entry_name.delete(0, tk.END)
+            entry_age.delete(0, tk.END)
+            entry_name.insert(0, r[1])
+            entry_age.insert(0, r[2])
+            return
+    messagebox.showinfo("Info", "ID no encontrado")
+
+def update_student():
+    sid = entry_id.get()
+    name = entry_name.get()
+    age = entry_age.get()
+    data = read_file()
+    new_data = []
+    updated = False
+    for r in data:
+        if r[0] == sid:
+            new_data.append([sid, name, age])
+            updated = True
+        else:
+            new_data.append(r)
+    write_file(new_data)
+    refresh_table()
+    if not updated:
+        messagebox.showinfo("Info", "ID no encontrado")
+def delete_student():
+    sid = entry_id.get()
+    data = read_file()
+    new_data = [r for r in data if r[0] != sid]
+    write_file(new_data)
+    refresh_table()
+root = tk.Tk()
+root.title("CRUD Estudiantes")
+tk.Label(root, text="ID").grid(row=0, column=0)
+entry_id = tk.Entry(root)
+entry_id.grid(row=0, column=1)
+tk.Label(root, text="Nombre").grid(row=1, column=0)
+entry_name = tk.Entry(root)
+entry_name.grid(row=1, column=1)
+tk.Label(root, text="Edad").grid(row=2, column=0)
+entry_age = tk.Entry(root)
+entry_age.grid(row=2, column=1)
+tk.Button(root, text="Create", command=create_student).grid(row=3, column=0)
+tk.Button(root, text="Read", command=read_student).grid(row=3, column=1)
+tk.Button(root, text="Update", command=update_student).grid(row=4, column=0)
+tk.Button(root, text="Delete", command=delete_student).grid(row=4, column=1)
+table = ttk.Treeview(root, columns=("ID", "Nombre", "Edad"), show="headings")
+table.heading("ID", text="ID")
+table.heading("Nombre", text="Nombre")
+table.heading("Edad", text="Edad")
+table.grid(row=5, column=0, columnspan=2)
+refresh_table()
+root.mainloop()

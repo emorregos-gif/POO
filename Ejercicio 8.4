@@ -1,0 +1,105 @@
+import tkinter as tk
+from tkinter import ttk, filedialog, messagebox
+
+class Empleado:
+    def __init__(self, nombre, apellidos, cargo, genero, salario, dias, otros, salud, pension):
+        self.nombre = nombre
+        self.apellidos = apellidos
+        self.cargo = cargo
+        self.genero = genero
+        self.salario = float(salario)
+        self.dias = int(dias)
+        self.otros = float(otros)
+        self.salud = float(salud)
+        self.pension = float(pension)
+    def sueldo_mensual(self):
+        return (self.salario * self.dias) + self.otros - self.salud - self.pension
+class NominaApp:
+    def __init__(self):
+        self.empleados = []
+        self.ventana = tk.Tk()
+        self.ventana.title("Nómina")
+        barra = tk.Menu(self.ventana)
+        self.ventana.config(menu=barra)
+        menu = tk.Menu(barra, tearoff=0)
+        barra.add_cascade(label="Opciones", menu=menu)
+        menu.add_command(label="Agregar empleado", command=self.agregar_empleado)
+        menu.add_command(label="Calcular nómina", command=self.calcular_nomina)
+        menu.add_command(label="Guardar archivo", command=self.guardar_archivo)
+        self.ventana.mainloop()
+    def agregar_empleado(self):
+        v = tk.Toplevel()
+        v.title("Agregar empleado")
+        tk.Label(v, text="Nombre").grid(row=0, column=0)
+        nombre = tk.Entry(v)
+        nombre.grid(row=0, column=1)
+        tk.Label(v, text="Apellidos").grid(row=1, column=0)
+        apellidos = tk.Entry(v)
+        apellidos.grid(row=1, column=1)
+        tk.Label(v, text="Cargo").grid(row=2, column=0)
+        cargo = ttk.Combobox(v, values=["Directivo", "Estratégico", "Operativo"])
+        cargo.grid(row=2, column=1)
+        tk.Label(v, text="Género").grid(row=3, column=0)
+        genero = ttk.Combobox(v, values=["Masculino", "Femenino"])
+        genero.grid(row=3, column=1)
+        tk.Label(v, text="Salario por día").grid(row=4, column=0)
+        salario = tk.Entry(v)
+        salario.grid(row=4, column=1)
+        tk.Label(v, text="Días trabajados").grid(row=5, column=0)
+        dias = tk.Spinbox(v, from_=1, to=31)
+        dias.grid(row=5, column=1)
+        tk.Label(v, text="Otros ingresos").grid(row=6, column=0)
+        otros = tk.Entry(v)
+        otros.grid(row=6, column=1)
+        tk.Label(v, text="Pagos salud").grid(row=7, column=0)
+        salud = tk.Entry(v)
+        salud.grid(row=7, column=1)
+        tk.Label(v, text="Aporte pensiones").grid(row=8, column=0)
+        pension = tk.Entry(v)
+        pension.grid(row=8, column=1)
+        def guardar():
+            emp = Empleado(
+                nombre.get(),
+                apellidos.get(),
+                cargo.get(),
+                genero.get(),
+                salario.get(),
+                dias.get(),
+                otros.get(),
+                salud.get(),
+                pension.get()
+            )
+            self.empleados.append(emp)
+            v.destroy()
+            messagebox.showinfo("Éxito", "Empleado agregado")
+        tk.Button(v, text="Guardar", command=guardar).grid(row=9, column=1)
+    def calcular_nomina(self):
+        v = tk.Toplevel()
+        v.title("Cálculo nómina")
+        tabla = ttk.Treeview(v, columns=("n", "a", "s"), show="headings")
+        tabla.heading("n", text="Nombre")
+        tabla.heading("a", text="Apellidos")
+        tabla.heading("s", text="Sueldo mensual")
+        tabla.pack()
+        total = 0
+        for e in self.empleados:
+            s = e.sueldo_mensual()
+            tabla.insert("", tk.END, values=(e.nombre, e.apellidos, round(s, 2)))
+            total += s
+        tk.Label(v, text="Total nómina: " + str(round(total, 2))).pack()
+    def guardar_archivo(self):
+        if not self.empleados:
+            messagebox.showerror("Error", "No hay empleados")
+            return
+        ruta = filedialog.askdirectory()
+        if ruta:
+            ruta += "/Nomina.txt"
+            with open(ruta, "w") as f:
+                total = 0
+                for e in self.empleados:
+                    s = e.sueldo_mensual()
+                    total += s
+                    f.write(f"{e.nombre} {e.apellidos} - Sueldo: {round(s,2)}\n")
+                f.write("\nTotal nómina: " + str(round(total, 2)))
+            messagebox.showinfo("Éxito", "Archivo guardado")
+NominaApp()
